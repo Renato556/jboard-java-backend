@@ -32,5 +32,6 @@ public class JobDTO implements Serializable {
         this.company = job.getCompany();
         this.url = job.getUrl();
         this.seniorityLevel = job.getSeniorityLevel();
+        this.field = job.getField();
     }
 }
