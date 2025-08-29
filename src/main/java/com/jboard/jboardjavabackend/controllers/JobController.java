@@ -23,7 +23,7 @@ public class JobController {
     }
 
     @GetMapping
-    public ResponseEntity<JobResponseDTO> findAll(@RequestParam(defaultValue = "0") int page,
+    public ResponseEntity<JobResponseDTO> findAll(@RequestParam(defaultValue = "1") int page,
                                                   @RequestParam(defaultValue = "25") int size) {
         return ResponseEntity.ok(jobService.getJobs(PageRequest.of(subtractPageNumber(page), size)));
     }
