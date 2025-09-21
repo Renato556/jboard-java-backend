@@ -1,4 +1,4 @@
-package com.jboard.jboardjavabackend.models.dtos;
+package br.com.jboard.orchestrator.models.dtos;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -7,5 +7,4 @@ import lombok.Data;
 @AllArgsConstructor
 public class MetaDTO {
     private long totalRecords;
-    private int totalPages;
 }

@@ -1,6 +1,0 @@
-- Tratamento de erros
-- Implementação dos outros métodos do repository
-- Definição do cache size
-- README
-- Testes unitários
-- Observabilidade

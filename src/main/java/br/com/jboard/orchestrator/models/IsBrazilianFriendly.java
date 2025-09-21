@@ -1,4 +1,4 @@
-package com.jboard.jboardjavabackend.models;
+package br.com.jboard.orchestrator.models;
 
 import lombok.Data;
 

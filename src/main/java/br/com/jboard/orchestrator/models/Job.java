@@ -1,14 +1,10 @@
-package com.jboard.jboardjavabackend.models;
+package br.com.jboard.orchestrator.models;
 
 import lombok.Getter;
-import org.springframework.data.annotation.Id;
-import org.springframework.data.mongodb.core.mapping.Document;
 
 @Getter
-@Document(collection = "jobs")
 public class Job {
-    @Id
-    private String _id;
+    private String id;
     private String title;
     private String updatedAt;
     private String employmentType;

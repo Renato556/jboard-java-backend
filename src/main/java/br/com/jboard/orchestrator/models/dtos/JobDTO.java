@@ -1,12 +1,13 @@
-package com.jboard.jboardjavabackend.models.dtos;
+package br.com.jboard.orchestrator.models.dtos;
 
-import com.jboard.jboardjavabackend.models.Job;
+import br.com.jboard.orchestrator.models.Job;
 import lombok.Data;
 
 import java.io.Serializable;
 
 @Data
 public class JobDTO implements Serializable {
+    private String id;
     private String title;
     private String updatedAt;
     private String employmentType;
@@ -21,6 +22,7 @@ public class JobDTO implements Serializable {
     private String field;
 
     public JobDTO(Job job) {
+        this.id = job.getId();
         this.title = job.getTitle();
         this.updatedAt = job.getUpdatedAt();
         this.employmentType = job.getEmploymentType();
