@@ -92,7 +92,7 @@ jobs:
             --environment ${{ env.CONTAINER_APP_ENVIRONMENT }} \
             --image ${{ env.AZURE_CONTAINER_REGISTRY }}.azurecr.io/${{ env.IMAGE_NAME }}:${{ github.sha }} \
             --target-port 8081 \
-            --ingress internal \
+            --ingress external \
             --env-vars \
               CRUD_URL="${{ secrets.CRUD_URL }}" \
               FRONTEND_URLS="${{ secrets.FRONTEND_URLS }}" \
