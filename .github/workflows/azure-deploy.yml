@@ -36,6 +36,9 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-m2-
 
+    - name: Make mvnw executable
+      run: chmod +x ./mvnw
+
     - name: Download dependencies
       run: ./mvnw dependency:go-offline -DskipTests
 
@@ -79,7 +82,8 @@ jobs:
             --resource-group ${{ env.RESOURCE_GROUP }} \
             --image ${{ env.AZURE_CONTAINER_REGISTRY }}.azurecr.io/${{ env.IMAGE_NAME }}:${{ github.sha }} \
             --set-env-vars \
-              CRUD_URL="${{ secrets.CRUD_URL }}"
+              CRUD_URL="${{ secrets.CRUD_URL }}" \
+              FRONTEND_URLS="${{ secrets.FRONTEND_URLS }}"
         else
           echo "Container App does not exist, creating..."
           az containerapp create \
@@ -91,11 +95,12 @@ jobs:
             --ingress internal \
             --env-vars \
               CRUD_URL="${{ secrets.CRUD_URL }}" \
+              FRONTEND_URLS="${{ secrets.FRONTEND_URLS }}" \
             --registry-server ${{ env.AZURE_CONTAINER_REGISTRY }}.azurecr.io \
             --registry-username ${{ secrets.ACR_USERNAME }} \
             --registry-password ${{ secrets.ACR_PASSWORD }} \
-            --cpu 0.25 \
-            --memory 0.5Gi \
+            --cpu 0.5 \
+            --memory 1Gi \
             --min-replicas 1 \
-            --max-replicas 3
+            --max-replicas 5
         fi
