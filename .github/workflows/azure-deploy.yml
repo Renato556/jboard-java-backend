@@ -80,7 +80,9 @@ jobs:
             --image ${{ env.AZURE_CONTAINER_REGISTRY }}.azurecr.io/${{ env.IMAGE_NAME }}:${{ github.sha }} \
             --set-env-vars \
               CRUD_URL="${{ secrets.CRUD_URL }}" \
-              FRONTEND_URLS="${{ secrets.FRONTEND_URLS }}"
+              FRONTEND_URLS="${{ secrets.FRONTEND_URLS }}" \
+              JWT_SECRET="${{ secrets.JWT_SECRET }}" \
+              ADMIN_CREDENTIALS="${{ secrets.ADMIN_CREDENTIALS }}"
         else
           echo "Container App does not exist, creating..."
           az containerapp create \
@@ -93,6 +95,8 @@ jobs:
             --env-vars \
               CRUD_URL="${{ secrets.CRUD_URL }}" \
               FRONTEND_URLS="${{ secrets.FRONTEND_URLS }}" \
+              JWT_SECRET="${{ secrets.JWT_SECRET }}" \
+              ADMIN_CREDENTIALS="${{ secrets.ADMIN_CREDENTIALS }}" \
             --registry-server ${{ env.AZURE_CONTAINER_REGISTRY }}.azurecr.io \
             --registry-username ${{ secrets.ACR_USERNAME }} \
             --registry-password ${{ secrets.ACR_PASSWORD }} \
