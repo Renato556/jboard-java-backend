@@ -1,11 +1,13 @@
 package br.com.jboard.orchestrator.clients;
 
 import br.com.jboard.orchestrator.models.Job;
+import br.com.jboard.orchestrator.models.exceptions.InternalServerErrorException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
+import org.springframework.web.client.RestClientException;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -34,7 +36,10 @@ public class JobClient {
             return jobs == null ? Collections.emptyList() : jobs;
         } catch (URISyntaxException ex) {
             log.error("Erro ao criar URI para buscar jobs: {}", ex.getMessage());
-            throw new RuntimeException("Erro ao criar URI para buscar jobs", ex);
+            throw new InternalServerErrorException("Erro interno - URI inválida", ex);
+        } catch (RestClientException ex) {
+            log.error("Erro ao buscar jobs: {}", ex.getMessage());
+            throw ex;
         }
     }
 }

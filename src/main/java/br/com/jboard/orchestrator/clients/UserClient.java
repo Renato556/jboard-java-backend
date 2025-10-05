@@ -1,11 +1,13 @@
 package br.com.jboard.orchestrator.clients;
 
 import br.com.jboard.orchestrator.models.User;
+import br.com.jboard.orchestrator.models.exceptions.InternalServerErrorException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
+import org.springframework.web.client.RestClientException;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -42,7 +44,10 @@ public class UserClient {
                     .toBodilessEntity();
         } catch (URISyntaxException ex) {
             log.error("Erro ao criar URI para registrar usuário: {}", ex.getMessage());
-            throw new RuntimeException("Erro ao criar URI para registrar usuário", ex);
+            throw new InternalServerErrorException("Erro interno - URI inválida", ex);
+        } catch (RestClientException ex) {
+            log.error("Erro ao registrar usuário: {}", ex.getMessage());
+            throw ex;
         }
     }
 
@@ -56,7 +61,10 @@ public class UserClient {
                     .toBodilessEntity();
         } catch (URISyntaxException ex) {
             log.error("Erro ao criar URI para atualizar senha do usuário: {}", ex.getMessage());
-            throw new RuntimeException("Erro ao criar URI para atualizar senha do usuário", ex);
+            throw new InternalServerErrorException("Erro interno - URI inválida", ex);
+        } catch (RestClientException ex) {
+            log.error("Erro ao atualizar usuário: {}", ex.getMessage());
+            throw ex;
         }
     }
 
@@ -68,7 +76,10 @@ public class UserClient {
                     .toBodilessEntity();
         } catch (URISyntaxException ex) {
             log.error("Erro ao criar URI para deletar usuário: {}", ex.getMessage());
-            throw new RuntimeException("Erro ao criar URI para deletar usuário", ex);
+            throw new InternalServerErrorException("Erro interno - URI inválida", ex);
+        } catch (RestClientException ex) {
+            log.error("Erro ao deletar usuário: {}", ex.getMessage());
+            throw ex;
         }
     }
 
@@ -80,7 +91,10 @@ public class UserClient {
                     .body(User.class);
         } catch (URISyntaxException ex) {
             log.error("Erro ao criar URI para buscar usuário por:{}. Exception: {}", param, ex.getMessage());
-            throw new RuntimeException("Erro ao criar URI para buscar usuário", ex);
+            throw new InternalServerErrorException("Erro interno - URI inválida", ex);
+        } catch (RestClientException ex) {
+            log.error("Erro ao buscar usuário por {}: {}", param, ex.getMessage());
+            throw ex;
         }
     }
 }

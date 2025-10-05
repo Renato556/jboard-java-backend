@@ -49,7 +49,7 @@ class JobClientTest {
     }
 
     @Test
-    void getJobs_null_returnsEmptyList() throws Exception {
+    void getJobs_null_returnsEmptyList() {
         RestClient.RequestHeadersUriSpec spec = mock(RestClient.RequestHeadersUriSpec.class);
         RestClient.RequestHeadersSpec headersSpec = mock(RestClient.RequestHeadersSpec.class);
         RestClient.ResponseSpec responseSpec = mock(RestClient.ResponseSpec.class);
@@ -72,5 +72,22 @@ class JobClientTest {
         urlField.set(client, "::::");
         RuntimeException ex = assertThrows(RuntimeException.class, client::getJobs);
         assertInstanceOf(URISyntaxException.class, ex.getCause());
+    }
+
+    @Test
+    void getJobs_throwsRestClientException() {
+        RestClient.RequestHeadersUriSpec spec = mock(RestClient.RequestHeadersUriSpec.class);
+        RestClient.RequestHeadersSpec headersSpec = mock(RestClient.RequestHeadersSpec.class);
+        RestClient.ResponseSpec responseSpec = mock(RestClient.ResponseSpec.class);
+
+        when(restClient.get()).thenReturn(spec);
+        try {
+            when(spec.uri(any(java.net.URI.class))).thenReturn(headersSpec);
+        } catch (Exception ignored) {}
+        when(headersSpec.retrieve()).thenReturn(responseSpec);
+        when(responseSpec.body(any(ParameterizedTypeReference.class)))
+                .thenThrow(new org.springframework.web.client.RestClientException("Service unavailable"));
+
+        assertThrows(org.springframework.web.client.RestClientException.class, () -> jobClient.getJobs());
     }
 }

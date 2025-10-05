@@ -4,8 +4,6 @@ import br.com.jboard.orchestrator.models.User;
 import br.com.jboard.orchestrator.models.enums.RoleEnum;
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
-import com.auth0.jwt.exceptions.JWTCreationException;
-import com.auth0.jwt.exceptions.JWTVerificationException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -163,5 +161,123 @@ class TokenServiceTest {
         String result = tokenService.validateToken(malformedToken);
 
         assertEquals("", result);
+    }
+
+    @Test
+    void generateToken_userWithSpecialCharactersInUsername_generatesValidToken() {
+        User user = new User("user@domain.com", "password", RoleEnum.FREE);
+
+        String token = tokenService.generateToken(user);
+        String validatedUsername = tokenService.validateToken(token);
+
+        assertEquals("user@domain.com", validatedUsername);
+    }
+
+    @Test
+    void generateToken_userWithUnicodeCharactersInUsername_generatesValidToken() {
+        User user = new User("usuário_teste", "password", RoleEnum.PREMIUM);
+
+        String token = tokenService.generateToken(user);
+        String validatedUsername = tokenService.validateToken(token);
+
+        assertEquals("usuário_teste", validatedUsername);
+    }
+
+    @Test
+    void generateToken_userWithVeryLongUsername_generatesValidToken() {
+        String longUsername = "a".repeat(255);
+        User user = new User(longUsername, "password", RoleEnum.FREE);
+
+        String token = tokenService.generateToken(user);
+        String validatedUsername = tokenService.validateToken(token);
+
+        assertEquals(longUsername, validatedUsername);
+    }
+
+    @Test
+    void validateToken_tokenWithoutExpirationClaim_returnsUsername() {
+        String tokenWithoutExpiration = JWT.create()
+                .withIssuer("jboard")
+                .withSubject("testuser")
+                .sign(Algorithm.HMAC256("test-secret-key"));
+
+        String result = tokenService.validateToken(tokenWithoutExpiration);
+
+        assertEquals("testuser", result);
+    }
+
+    @Test
+    void validateToken_tokenWithoutSubjectClaim_returnsNull() {
+        String tokenWithoutSubject = JWT.create()
+                .withIssuer("jboard")
+                .withExpiresAt(java.time.Instant.now().plusSeconds(3600))
+                .sign(Algorithm.HMAC256("test-secret-key"));
+
+        String result = tokenService.validateToken(tokenWithoutSubject);
+
+        assertNull(result);
+    }
+
+    @Test
+    void validateToken_tokenSignedWithDifferentAlgorithm_returnsEmptyString() {
+        String tokenWithDifferentAlgorithm = JWT.create()
+                .withIssuer("jboard")
+                .withSubject("testuser")
+                .withExpiresAt(java.time.Instant.now().plusSeconds(3600))
+                .sign(Algorithm.HMAC512("test-secret-key"));
+
+        String result = tokenService.validateToken(tokenWithDifferentAlgorithm);
+
+        assertEquals("", result);
+    }
+
+    @Test
+    void generateToken_multipleCallsWithSameUser_mayGenerateSameTokens() {
+        User user = new User("testuser", "password", RoleEnum.FREE);
+
+        String token1 = tokenService.generateToken(user);
+        String token2 = tokenService.generateToken(user);
+
+        assertNotNull(token1);
+        assertNotNull(token2);
+        assertEquals("testuser", tokenService.validateToken(token1));
+        assertEquals("testuser", tokenService.validateToken(token2));
+    }
+
+    @Test
+    void validateToken_whitespaceOnlyToken_returnsEmptyString() {
+        String whitespaceToken = "   ";
+
+        String result = tokenService.validateToken(whitespaceToken);
+
+        assertEquals("", result);
+    }
+
+    @Test
+    void generateToken_verifyTokenStructure_containsExpectedParts() {
+        User user = new User("testuser", "password", RoleEnum.FREE);
+
+        String token = tokenService.generateToken(user);
+
+        String[] parts = token.split("\\.");
+        assertEquals(3, parts.length);
+        assertFalse(parts[0].isEmpty());
+        assertFalse(parts[1].isEmpty());
+        assertFalse(parts[2].isEmpty());
+    }
+
+    @Test
+    void generateToken_withInvalidSecret_throwsIllegalArgumentException() throws Exception {
+        Field secretField = TokenService.class.getDeclaredField("secret");
+        secretField.setAccessible(true);
+        secretField.set(tokenService, null);
+
+        User user = new User("testuser", "password", RoleEnum.FREE);
+
+        IllegalArgumentException exception =
+                assertThrows(IllegalArgumentException.class,
+                        () -> tokenService.generateToken(user));
+
+        assertEquals("The Secret cannot be null", exception.getMessage());
     }
 }
