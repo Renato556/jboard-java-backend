@@ -1,5 +1,6 @@
 package br.com.jboard.orchestrator.services;
 
+import br.com.jboard.orchestrator.models.JWTSubject;
 import br.com.jboard.orchestrator.models.User;
 import br.com.jboard.orchestrator.models.enums.RoleEnum;
 import com.auth0.jwt.JWT;
@@ -48,75 +49,80 @@ class TokenServiceTest {
     }
 
     @Test
-    void validateToken_validToken_returnsUsername() {
+    void validateToken_validToken_returnsJWTSubject() {
         User user = new User("testuser", "password", RoleEnum.FREE);
         String token = tokenService.generateToken(user);
 
-        String username = tokenService.validateToken(token);
+        JWTSubject jwtSubject = tokenService.validateToken(token);
 
-        assertEquals("testuser", username);
+        assertNotNull(jwtSubject);
+        assertEquals("testuser", jwtSubject.getUsername());
+        assertEquals("free", jwtSubject.getRole());
     }
 
     @Test
-    void validateToken_invalidToken_returnsEmptyString() {
+    void validateToken_invalidToken_returnsNull() {
         String invalidToken = "invalid.token.here";
 
-        String result = tokenService.validateToken(invalidToken);
+        JWTSubject result = tokenService.validateToken(invalidToken);
 
-        assertEquals("", result);
+        assertNull(result);
     }
 
     @Test
-    void validateToken_expiredToken_returnsEmptyString() {
+    void validateToken_expiredToken_returnsNull() {
         String expiredToken = JWT.create()
                 .withIssuer("jboard")
                 .withSubject("testuser")
+                .withClaim("role", "free")
                 .withExpiresAt(java.time.Instant.now().minusSeconds(3600))
                 .sign(Algorithm.HMAC256("test-secret-key"));
 
-        String result = tokenService.validateToken(expiredToken);
+        JWTSubject result = tokenService.validateToken(expiredToken);
 
-        assertEquals("", result);
+        assertNull(result);
     }
 
     @Test
-    void validateToken_tokenWithWrongIssuer_returnsEmptyString() {
+    void validateToken_tokenWithWrongIssuer_returnsNull() {
         String tokenWithWrongIssuer = JWT.create()
                 .withIssuer("wrong-issuer")
                 .withSubject("testuser")
+                .withClaim("role", "free")
                 .withExpiresAt(java.time.Instant.now().plusSeconds(3600))
                 .sign(Algorithm.HMAC256("test-secret-key"));
 
-        String result = tokenService.validateToken(tokenWithWrongIssuer);
+        JWTSubject result = tokenService.validateToken(tokenWithWrongIssuer);
 
-        assertEquals("", result);
+        assertNull(result);
     }
 
     @Test
-    void validateToken_tokenWithDifferentSecret_returnsEmptyString() {
+    void validateToken_tokenWithDifferentSecret_returnsNull() {
         String tokenWithDifferentSecret = JWT.create()
                 .withIssuer("jboard")
                 .withSubject("testuser")
+                .withClaim("role", "free")
                 .withExpiresAt(java.time.Instant.now().plusSeconds(3600))
                 .sign(Algorithm.HMAC256("different-secret"));
 
-        String result = tokenService.validateToken(tokenWithDifferentSecret);
+        JWTSubject result = tokenService.validateToken(tokenWithDifferentSecret);
 
-        assertEquals("", result);
+        assertNull(result);
     }
 
     @Test
-    void validateToken_nullToken_returnsEmptyString() {
-        String result = tokenService.validateToken(null);
+    void validateToken_nullToken_returnsNull() {
+        JWTSubject result = tokenService.validateToken(null);
 
-        assertEquals("", result);
+        assertNull(result);
     }
 
     @Test
-    void validateToken_emptyToken_returnsEmptyString() {
-        String result = tokenService.validateToken("");
+    void validateToken_emptyToken_returnsNull() {
+        JWTSubject result = tokenService.validateToken("");
 
-        assertEquals("", result);
+        assertNull(result);
     }
 
     @Test
@@ -139,9 +145,11 @@ class TokenServiceTest {
         User user = new User("roundtripuser", "password", RoleEnum.PREMIUM);
 
         String token = tokenService.generateToken(user);
-        String validatedUsername = tokenService.validateToken(token);
+        JWTSubject jwtSubject = tokenService.validateToken(token);
 
-        assertEquals("roundtripuser", validatedUsername);
+        assertNotNull(jwtSubject);
+        assertEquals("roundtripuser", jwtSubject.getUsername());
+        assertEquals("premium", jwtSubject.getRole());
     }
 
     @Test
@@ -149,18 +157,20 @@ class TokenServiceTest {
         User user = new User("", "password", RoleEnum.FREE);
 
         String token = tokenService.generateToken(user);
-        String validatedUsername = tokenService.validateToken(token);
+        JWTSubject jwtSubject = tokenService.validateToken(token);
 
-        assertEquals("", validatedUsername);
+        assertNotNull(jwtSubject);
+        assertEquals("", jwtSubject.getUsername());
+        assertEquals("free", jwtSubject.getRole());
     }
 
     @Test
-    void validateToken_malformedToken_returnsEmptyString() {
+    void validateToken_malformedToken_returnsNull() {
         String malformedToken = "not.a.valid.jwt.token.format";
 
-        String result = tokenService.validateToken(malformedToken);
+        JWTSubject result = tokenService.validateToken(malformedToken);
 
-        assertEquals("", result);
+        assertNull(result);
     }
 
     @Test
@@ -168,9 +178,11 @@ class TokenServiceTest {
         User user = new User("user@domain.com", "password", RoleEnum.FREE);
 
         String token = tokenService.generateToken(user);
-        String validatedUsername = tokenService.validateToken(token);
+        JWTSubject jwtSubject = tokenService.validateToken(token);
 
-        assertEquals("user@domain.com", validatedUsername);
+        assertNotNull(jwtSubject);
+        assertEquals("user@domain.com", jwtSubject.getUsername());
+        assertEquals("free", jwtSubject.getRole());
     }
 
     @Test
@@ -178,9 +190,11 @@ class TokenServiceTest {
         User user = new User("usuário_teste", "password", RoleEnum.PREMIUM);
 
         String token = tokenService.generateToken(user);
-        String validatedUsername = tokenService.validateToken(token);
+        JWTSubject jwtSubject = tokenService.validateToken(token);
 
-        assertEquals("usuário_teste", validatedUsername);
+        assertNotNull(jwtSubject);
+        assertEquals("usuário_teste", jwtSubject.getUsername());
+        assertEquals("premium", jwtSubject.getRole());
     }
 
     @Test
@@ -189,46 +203,23 @@ class TokenServiceTest {
         User user = new User(longUsername, "password", RoleEnum.FREE);
 
         String token = tokenService.generateToken(user);
-        String validatedUsername = tokenService.validateToken(token);
+        JWTSubject jwtSubject = tokenService.validateToken(token);
 
-        assertEquals(longUsername, validatedUsername);
+        assertNotNull(jwtSubject);
+        assertEquals(longUsername, jwtSubject.getUsername());
+        assertEquals("free", jwtSubject.getRole());
     }
 
     @Test
-    void validateToken_tokenWithoutExpirationClaim_returnsUsername() {
-        String tokenWithoutExpiration = JWT.create()
-                .withIssuer("jboard")
-                .withSubject("testuser")
-                .sign(Algorithm.HMAC256("test-secret-key"));
+    void validateToken_tokenWithPremiumRole_returnsCorrectRole() {
+        User user = new User("premiumuser", "password", RoleEnum.PREMIUM);
+        String token = tokenService.generateToken(user);
 
-        String result = tokenService.validateToken(tokenWithoutExpiration);
+        JWTSubject jwtSubject = tokenService.validateToken(token);
 
-        assertEquals("testuser", result);
-    }
-
-    @Test
-    void validateToken_tokenWithoutSubjectClaim_returnsNull() {
-        String tokenWithoutSubject = JWT.create()
-                .withIssuer("jboard")
-                .withExpiresAt(java.time.Instant.now().plusSeconds(3600))
-                .sign(Algorithm.HMAC256("test-secret-key"));
-
-        String result = tokenService.validateToken(tokenWithoutSubject);
-
-        assertNull(result);
-    }
-
-    @Test
-    void validateToken_tokenSignedWithDifferentAlgorithm_returnsEmptyString() {
-        String tokenWithDifferentAlgorithm = JWT.create()
-                .withIssuer("jboard")
-                .withSubject("testuser")
-                .withExpiresAt(java.time.Instant.now().plusSeconds(3600))
-                .sign(Algorithm.HMAC512("test-secret-key"));
-
-        String result = tokenService.validateToken(tokenWithDifferentAlgorithm);
-
-        assertEquals("", result);
+        assertNotNull(jwtSubject);
+        assertEquals("premiumuser", jwtSubject.getUsername());
+        assertEquals("premium", jwtSubject.getRole());
     }
 
     @Test
@@ -240,17 +231,23 @@ class TokenServiceTest {
 
         assertNotNull(token1);
         assertNotNull(token2);
-        assertEquals("testuser", tokenService.validateToken(token1));
-        assertEquals("testuser", tokenService.validateToken(token2));
+
+        JWTSubject jwtSubject1 = tokenService.validateToken(token1);
+        JWTSubject jwtSubject2 = tokenService.validateToken(token2);
+
+        assertNotNull(jwtSubject1);
+        assertNotNull(jwtSubject2);
+        assertEquals("testuser", jwtSubject1.getUsername());
+        assertEquals("testuser", jwtSubject2.getUsername());
     }
 
     @Test
-    void validateToken_whitespaceOnlyToken_returnsEmptyString() {
+    void validateToken_whitespaceOnlyToken_returnsNull() {
         String whitespaceToken = "   ";
 
-        String result = tokenService.validateToken(whitespaceToken);
+        JWTSubject result = tokenService.validateToken(whitespaceToken);
 
-        assertEquals("", result);
+        assertNull(result);
     }
 
     @Test

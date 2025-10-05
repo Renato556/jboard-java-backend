@@ -10,19 +10,20 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class AuthenticationServiceTest {
     @Mock
     UserClient userClient;
+    @Mock
+    SkillService skillService;
     @InjectMocks
     AuthenticationService authenticationService;
 
@@ -144,20 +145,34 @@ class AuthenticationServiceTest {
     @Test
     void deleteAccount_successfulDeletion_callsUserClient() {
         String username = "testuser";
+        doNothing().when(skillService).deleteAllSkills(username);
         doNothing().when(userClient).deleteAccount(username);
 
         authenticationService.deleteAccount(username);
 
+        verify(skillService).deleteAllSkills(username);
         verify(userClient).deleteAccount(username);
     }
 
     @Test
     void deleteAccount_userClientThrowsException_propagatesException() {
         String username = "nonexistentuser";
+        doNothing().when(skillService).deleteAllSkills(username);
         doThrow(new RuntimeException("User not found")).when(userClient).deleteAccount(username);
 
         assertThrows(RuntimeException.class, () -> authenticationService.deleteAccount(username));
+        verify(skillService).deleteAllSkills(username);
         verify(userClient).deleteAccount(username);
+    }
+
+    @Test
+    void deleteAccount_skillServiceThrowsException_propagatesException() {
+        String username = "testuser";
+        doThrow(new RuntimeException("Skill deletion failed")).when(skillService).deleteAllSkills(username);
+
+        assertThrows(RuntimeException.class, () -> authenticationService.deleteAccount(username));
+        verify(skillService).deleteAllSkills(username);
+        verify(userClient, never()).deleteAccount(username);
     }
 
     @Test

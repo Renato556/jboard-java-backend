@@ -1,5 +1,6 @@
 package br.com.jboard.orchestrator.configs;
 
+import br.com.jboard.orchestrator.models.JWTSubject;
 import br.com.jboard.orchestrator.services.AuthorizationService;
 import br.com.jboard.orchestrator.services.TokenService;
 import jakarta.servlet.FilterChain;
@@ -32,9 +33,9 @@ public class SecurityFilter extends OncePerRequestFilter {
 
         if (token != null) {
             try {
-                var subject = tokenService.validateToken(token);
-                if (subject != null && !subject.isEmpty()) {
-                    UserDetails user = authorizationService.loadUserByUsername(subject);
+                JWTSubject jwtSubject = tokenService.validateToken(token);
+                if (jwtSubject != null && jwtSubject.getUsername() != null) {
+                    UserDetails user = authorizationService.loadUserByUsername(jwtSubject.getUsername());
                     var authentication = new UsernamePasswordAuthenticationToken(user, null, user.getAuthorities());
                     SecurityContextHolder.getContext().setAuthentication(authentication);
                 } else {
