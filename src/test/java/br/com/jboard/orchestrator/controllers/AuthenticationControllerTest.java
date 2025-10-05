@@ -8,6 +8,7 @@ import br.com.jboard.orchestrator.models.dtos.RegisterDTO;
 import br.com.jboard.orchestrator.models.enums.RoleEnum;
 import br.com.jboard.orchestrator.services.AuthenticationService;
 import br.com.jboard.orchestrator.services.TokenService;
+import br.com.jboard.orchestrator.utils.AuthUtils;
 import jakarta.servlet.http.HttpServletRequest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -32,6 +33,8 @@ class AuthenticationControllerTest {
     AuthenticationService authenticationService;
     @Mock
     TokenService tokenService;
+    @Mock
+    AuthUtils authUtils;
     @Mock
     HttpServletRequest request;
     @InjectMocks
@@ -106,17 +109,15 @@ class AuthenticationControllerTest {
         changePasswordDto.setOldPassword("oldpass");
         changePasswordDto.setNewPassword("newpass");
 
-        String token = "valid-jwt-token";
         String username = "testuser";
 
-        when(request.getHeader("Authorization")).thenReturn("Bearer " + token);
-        when(tokenService.validateToken(token)).thenReturn(username);
+        when(authUtils.getUsernameFromRequest(request)).thenReturn(username);
         doNothing().when(authenticationService).updatePassword(changePasswordDto, username);
 
         ResponseEntity response = authenticationController.updatePassword(changePasswordDto, request);
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
-        verify(tokenService).validateToken(token);
+        verify(authUtils).getUsernameFromRequest(request);
         verify(authenticationService).updatePassword(changePasswordDto, username);
     }
 
@@ -126,12 +127,12 @@ class AuthenticationControllerTest {
         changePasswordDto.setOldPassword("oldpass");
         changePasswordDto.setNewPassword("newpass");
 
-        when(request.getHeader("Authorization")).thenReturn(null);
+        when(authUtils.getUsernameFromRequest(request)).thenThrow(new RuntimeException("Invalid token"));
 
-        assertThrows(NullPointerException.class, () ->
+        assertThrows(RuntimeException.class, () ->
             authenticationController.updatePassword(changePasswordDto, request));
 
-        verify(authenticationService, never()).updatePassword(any(), any());
+        verify(authUtils).getUsernameFromRequest(request);
     }
 
     @Test
@@ -140,62 +141,52 @@ class AuthenticationControllerTest {
         changePasswordDto.setOldPassword("wrongpass");
         changePasswordDto.setNewPassword("newpass");
 
-        String token = "valid-jwt-token";
         String username = "testuser";
 
-        when(request.getHeader("Authorization")).thenReturn("Bearer " + token);
-        when(tokenService.validateToken(token)).thenReturn(username);
+        when(authUtils.getUsernameFromRequest(request)).thenReturn(username);
         doThrow(new RuntimeException("Old password incorrect")).when(authenticationService)
                 .updatePassword(changePasswordDto, username);
 
         assertThrows(RuntimeException.class, () ->
             authenticationController.updatePassword(changePasswordDto, request));
 
+        verify(authUtils).getUsernameFromRequest(request);
         verify(authenticationService).updatePassword(changePasswordDto, username);
     }
 
     @Test
     void deleteAccount_successfulDeletion_returnsOkResponse() {
-        String token = "valid-jwt-token";
         String username = "testuser";
 
-        when(request.getHeader("Authorization")).thenReturn("Bearer " + token);
-        when(tokenService.validateToken(token)).thenReturn(username);
+        when(authUtils.getUsernameFromRequest(request)).thenReturn(username);
         doNothing().when(authenticationService).deleteAccount(username);
 
         ResponseEntity response = authenticationController.deleteAccount(request);
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
-        verify(tokenService).validateToken(token);
+        verify(authUtils).getUsernameFromRequest(request);
         verify(authenticationService).deleteAccount(username);
     }
 
     @Test
     void deleteAccount_invalidToken_handlesGracefully() {
-        String token = "";
-        String username = "";
+        when(authUtils.getUsernameFromRequest(request)).thenThrow(new RuntimeException("Invalid token"));
 
-        when(request.getHeader("Authorization")).thenReturn("Bearer ");
-        when(tokenService.validateToken(token)).thenReturn(username);
-        doNothing().when(authenticationService).deleteAccount(username);
+        assertThrows(RuntimeException.class, () -> authenticationController.deleteAccount(request));
 
-        ResponseEntity response = authenticationController.deleteAccount(request);
-
-        assertEquals(HttpStatus.OK, response.getStatusCode());
-        verify(tokenService).validateToken(token);
-        verify(authenticationService).deleteAccount(username);
+        verify(authUtils).getUsernameFromRequest(request);
     }
 
     @Test
     void deleteAccount_serviceThrowsException_propagatesException() {
-        String token = "valid-jwt-token";
         String username = "testuser";
 
-        when(request.getHeader("Authorization")).thenReturn("Bearer " + token);
-        when(tokenService.validateToken(token)).thenReturn(username);
+        when(authUtils.getUsernameFromRequest(request)).thenReturn(username);
         doThrow(new RuntimeException("User not found")).when(authenticationService).deleteAccount(username);
 
         assertThrows(RuntimeException.class, () -> authenticationController.deleteAccount(request));
+        
+        verify(authUtils).getUsernameFromRequest(request);
         verify(authenticationService).deleteAccount(username);
     }
 

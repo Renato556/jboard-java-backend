@@ -14,9 +14,11 @@ import org.springframework.stereotype.Service;
 @Service
 public class AuthenticationService {
     private final UserClient userClient;
+    private final SkillService skillService;
 
-    public AuthenticationService(UserClient userClient){
+    public AuthenticationService(UserClient userClient, SkillService skillService){
         this.userClient = userClient;
+        this.skillService = skillService;
     }
 
     public void registerUser(RegisterDTO data)  {
@@ -45,7 +47,19 @@ public class AuthenticationService {
     }
 
     public void deleteAccount(String username) {
-        userClient.deleteAccount(username);
-        log.info("Conta do usuário: {} deletada com sucesso", username);
+        log.info("Iniciando deleção da conta do usuário: {}", username);
+
+        try {
+            log.info("Deletando todas as skills do usuário: {}", username);
+            skillService.deleteAllSkills(username);
+
+            log.info("Deletando conta do usuário: {}", username);
+            userClient.deleteAccount(username);
+
+            log.info("Conta do usuário: {} deletada com sucesso (incluindo todas as skills)", username);
+        } catch (Exception ex) {
+            log.error("Erro ao deletar conta do usuário {}: {}", username, ex.getMessage());
+            throw ex;
+        }
     }
 }
