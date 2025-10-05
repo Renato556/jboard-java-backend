@@ -1,6 +1,7 @@
 package br.com.jboard.orchestrator.services;
 
 import br.com.jboard.orchestrator.models.User;
+import br.com.jboard.orchestrator.models.exceptions.InternalServerErrorException;
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.exceptions.JWTCreationException;
@@ -26,7 +27,7 @@ public class TokenService {
                     .withExpiresAt(generateExpirationDate())
                     .sign(algorithm);
         } catch (JWTCreationException ex) {
-            throw new RuntimeException("Erro ao gerar token", ex);
+            throw new InternalServerErrorException("Erro interno ao gerar token", ex);
         }
     }
 
