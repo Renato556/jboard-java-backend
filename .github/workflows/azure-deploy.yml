@@ -17,9 +17,6 @@ env:
 jobs:
   test-and-setup:
     runs-on: ubuntu-latest
-    outputs:
-      crud-url: ${{ steps.crud-url.outputs.crud-url }}
-      frontend-urls: ${{ steps.frontend-urls.outputs.frontend-urls }}
 
     steps:
     - name: Checkout code
@@ -47,6 +44,20 @@ jobs:
 
     - name: Run tests
       run: ./mvnw test
+
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    needs: test-and-setup
+    if: ${{ success() }}
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+      with:
+        driver: docker-container
 
     - name: Log in to Azure
       uses: azure/login@v2
@@ -91,20 +102,6 @@ jobs:
           echo "frontend-urls=$FRONTEND_URL" >> $GITHUB_OUTPUT
         fi
 
-  build-and-deploy:
-    runs-on: ubuntu-latest
-    needs: test-and-setup
-    if: ${{ success() }}
-
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-
-    - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v3
-      with:
-        driver: docker-container
-
     - name: Log in to Azure Container Registry
       uses: azure/docker-login@v1
       with:
@@ -136,8 +133,8 @@ jobs:
         registryUsername: ${{ secrets.ACR_USERNAME }}
         registryPassword: ${{ secrets.ACR_PASSWORD }}
         environmentVariables: >
-          CRUD_URL=${{ needs.test-and-setup.outputs.crud-url }}
-          FRONTEND_URLS=${{ needs.test-and-setup.outputs.frontend-urls }}
+          CRUD_URL=${{ steps.crud-url.outputs.crud-url }}
+          FRONTEND_URLS=${{ steps.frontend-urls.outputs.frontend-urls }}
           JWT_SECRET=${{ secrets.JWT_SECRET }}
           ADMIN_CREDENTIALS=${{ secrets.ADMIN_CREDENTIALS }}
 
@@ -178,8 +175,8 @@ jobs:
           echo "🌐 **Access your app:** https://${{ steps.get-url.outputs.fqdn }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "📋 **Quick Info:**" >> $GITHUB_STEP_SUMMARY
-          echo "- CRUD Backend: ${{ needs.test-and-setup.outputs.crud-url }}" >> $GITHUB_STEP_SUMMARY
-          echo "- Frontend: ${{ needs.test-and-setup.outputs.frontend-urls }}" >> $GITHUB_STEP_SUMMARY
+          echo "- CRUD Backend: ${{ steps.crud-url.outputs.crud-url }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Frontend: ${{ steps.frontend-urls.outputs.frontend-urls }}" >> $GITHUB_STEP_SUMMARY
           echo "- Version: \`${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
         else
           echo "# ❌ Deployment Failed" >> $GITHUB_STEP_SUMMARY
@@ -191,13 +188,13 @@ jobs:
           if [ "${{ needs.test-and-setup.result }}" != "success" ]; then
             echo "🧪 **Tests/Setup Failed:**" >> $GITHUB_STEP_SUMMARY
             echo "- Check Maven test failures" >> $GITHUB_STEP_SUMMARY
-            echo "- Verify CRUD Container App is running" >> $GITHUB_STEP_SUMMARY
-            echo "- Verify Frontend Container App is running" >> $GITHUB_STEP_SUMMARY
           elif [ "${{ steps.deploy.outcome }}" != "success" ]; then
             echo "🚀 **Deployment Failed:**" >> $GITHUB_STEP_SUMMARY
             echo "- Check Azure credentials" >> $GITHUB_STEP_SUMMARY
             echo "- Verify Container Registry access" >> $GITHUB_STEP_SUMMARY
             echo "- Check Container App configuration" >> $GITHUB_STEP_SUMMARY
+            echo "- Verify CRUD Container App is running" >> $GITHUB_STEP_SUMMARY
+            echo "- Verify Frontend Container App is running" >> $GITHUB_STEP_SUMMARY
           else
             echo "🔧 **Build Failed:**" >> $GITHUB_STEP_SUMMARY
             echo "- Check Docker build logs" >> $GITHUB_STEP_SUMMARY
