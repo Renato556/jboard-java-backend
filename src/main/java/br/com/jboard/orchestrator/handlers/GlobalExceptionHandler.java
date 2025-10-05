@@ -5,6 +5,8 @@ import br.com.jboard.orchestrator.models.exceptions.UnauthorizedException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.InternalAuthenticationServiceException;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.client.HttpClientErrorException;
@@ -12,23 +14,33 @@ import org.springframework.web.client.RestClientResponseException;
 
 @ControllerAdvice
 public class GlobalExceptionHandler {
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<String> handleMethodArgumentNotValidException() {
+        return new ResponseEntity<>("Campos inválidos", HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(InternalAuthenticationServiceException.class)
+    public ResponseEntity<String> handleInternalAuthenticationServiceException() {
+        return new ResponseEntity<>("Usuário ou senha incorreto", HttpStatus.UNAUTHORIZED);
+    }
+
     @ExceptionHandler(BadCredentialsException.class)
-    public ResponseEntity<String> handleBadCredentialsException(BadCredentialsException ex) {
+    public ResponseEntity<String> handleBadCredentialsException() {
         return new ResponseEntity<>("Usuário ou senha incorreto", HttpStatus.UNAUTHORIZED);
     }
 
     @ExceptionHandler(UnauthorizedException.class)
-    public ResponseEntity<String> handleUnauthorizedException(UnauthorizedException ex) {
-        return new ResponseEntity<>(ex.getMessage(), HttpStatus.UNAUTHORIZED);
+    public ResponseEntity<String> handleUnauthorizedException() {
+        return new ResponseEntity<>("Não autorizado", HttpStatus.UNAUTHORIZED);
     }
 
     @ExceptionHandler(ForbiddenException.class)
-    public ResponseEntity<String> handleForbiddenException(ForbiddenException ex) {
+    public ResponseEntity<String> handleForbiddenException() {
         return new ResponseEntity<>("Senha não confere", HttpStatus.FORBIDDEN);
     }
 
     @ExceptionHandler(HttpClientErrorException.Conflict.class)
-    public ResponseEntity<String> handleConflict(HttpClientErrorException.Conflict ex) {
+    public ResponseEntity<String> handleConflict() {
         return new ResponseEntity<>("Usuário já cadastrado", HttpStatus.CONFLICT);
     }
 
