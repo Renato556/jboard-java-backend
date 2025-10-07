@@ -26,7 +26,7 @@ public class AuthenticationService {
         User newUser = new User(data.getUsername(), encryptedPassword, RoleEnum.FREE);
 
         userClient.registerUser(newUser);
-        log.info("New user: {} registered successfully", data.getUsername());
+        log.info("Novo usuário cadastrado: {}", data.getUsername());
     }
 
     public void updatePassword(ChangePasswordDTO data, String username) {
