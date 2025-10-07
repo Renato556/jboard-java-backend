@@ -93,6 +93,10 @@ public class SkillClient {
             log.error("Erro ao criar URI para deletar todas as skills: {}", ex.getMessage());
             throw new InternalServerErrorException("Erro interno - URI inválida", ex);
         } catch (RestClientException ex) {
+            if (ex.getMessage() != null && ex.getMessage().contains("404 Not Found") && ex.getMessage().contains("user not found")) {
+                log.info("Usuário {} não encontrado ou sem skills - continuando fluxo normalmente", username);
+                return;
+            }
             log.error("Erro ao deletar todas as skills: {}", ex.getMessage());
             throw ex;
         }

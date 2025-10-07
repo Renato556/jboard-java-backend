@@ -319,4 +319,40 @@ class SkillClientTest {
 
         assertThrows(RestClientException.class, () -> skillClient.deleteAllSkills(username));
     }
+
+    @Test
+    void deleteAllSkills_with404UserNotFound_completesNormally() {
+        String username = "nonexistentuser";
+
+        RestClient.RequestHeadersUriSpec spec = mock(RestClient.RequestHeadersUriSpec.class);
+        RestClient.RequestHeadersSpec headersSpec = mock(RestClient.RequestHeadersSpec.class);
+        RestClient.ResponseSpec responseSpec = mock(RestClient.ResponseSpec.class);
+
+        when(restClient.delete()).thenReturn(spec);
+        try {
+            when(spec.uri(any(java.net.URI.class))).thenReturn(headersSpec);
+        } catch (Exception ignored) {}
+        when(headersSpec.retrieve()).thenReturn(responseSpec);
+        when(responseSpec.toBodilessEntity()).thenThrow(new RestClientException("404 Not Found: \"user not found\""));
+
+        assertDoesNotThrow(() -> skillClient.deleteAllSkills(username));
+    }
+
+    @Test
+    void deleteAllSkills_with404UserNotFoundVariation_completesNormally() {
+        String username = "anotheruser";
+
+        RestClient.RequestHeadersUriSpec spec = mock(RestClient.RequestHeadersUriSpec.class);
+        RestClient.RequestHeadersSpec headersSpec = mock(RestClient.RequestHeadersSpec.class);
+        RestClient.ResponseSpec responseSpec = mock(RestClient.ResponseSpec.class);
+
+        when(restClient.delete()).thenReturn(spec);
+        try {
+            when(spec.uri(any(java.net.URI.class))).thenReturn(headersSpec);
+        } catch (Exception ignored) {}
+        when(headersSpec.retrieve()).thenReturn(responseSpec);
+        when(responseSpec.toBodilessEntity()).thenThrow(new RestClientException("Request failed with status 404 Not Found: user not found"));
+
+        assertDoesNotThrow(() -> skillClient.deleteAllSkills(username));
+    }
 }
