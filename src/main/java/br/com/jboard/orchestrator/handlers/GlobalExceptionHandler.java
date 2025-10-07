@@ -1,5 +1,6 @@
 package br.com.jboard.orchestrator.handlers;
 
+import br.com.jboard.orchestrator.models.exceptions.BadRequestException;
 import br.com.jboard.orchestrator.models.exceptions.ForbiddenException;
 import br.com.jboard.orchestrator.models.exceptions.InternalServerErrorException;
 import br.com.jboard.orchestrator.models.exceptions.UnauthorizedException;
@@ -18,9 +19,8 @@ import org.springframework.web.client.RestClientResponseException;
 
 @ControllerAdvice
 public class GlobalExceptionHandler {
-
-    @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<String> handleMethodArgumentNotValidException() {
+    @ExceptionHandler({MethodArgumentNotValidException.class, BadRequestException.class})
+    public ResponseEntity<String> handleBadRequestExceptions() {
         return new ResponseEntity<>("Campos inválidos", HttpStatus.BAD_REQUEST);
     }
 

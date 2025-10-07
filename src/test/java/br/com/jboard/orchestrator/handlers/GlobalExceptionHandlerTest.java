@@ -15,7 +15,7 @@ class GlobalExceptionHandlerTest {
 
     @Test
     void handleMethodArgumentNotValidException_returnsBadRequestResponse() {
-        ResponseEntity<String> response = handler.handleMethodArgumentNotValidException();
+        ResponseEntity<String> response = handler.handleBadRequestExceptions();
 
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
         assertEquals("Campos inválidos", response.getBody());

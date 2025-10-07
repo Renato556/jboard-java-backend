@@ -41,6 +41,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.DELETE, "/api/auth/delete-account").authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/jobs").authenticated()
                         .requestMatchers("/api/skills").hasRole("PREMIUM")
+                        .requestMatchers("/api/analysis").hasRole("PREMIUM")
                         .requestMatchers("/api/admin/**").permitAll()
                 )
                 .exceptionHandling(ex -> ex

@@ -13,6 +13,7 @@ env:
   TARGET_PORT: 8081
   CRUD_CONTAINER_APP_NAME: jboard-go-crud
   FRONTEND_CONTAINER_APP_NAME: jboard-react-frontend
+  AI_ANALYSIS_CONTAINER_APP_NAME: jboard-py-ai-skills-vs-position
 
 jobs:
   test-and-setup:
@@ -83,6 +84,25 @@ jobs:
           echo "crud-url=$CRUD_URL" >> $GITHUB_OUTPUT
         fi
 
+    - name: Get ANALYSIS URL
+      id: analysis-url
+      run: |
+        ANALYSIS_FQDN=$(az containerapp show \
+          --name ${{ env.AI_ANALYSIS_CONTAINER_APP_NAME }} \
+          --resource-group ${{ env.RESOURCE_GROUP }} \
+          --query "properties.configuration.ingress.fqdn" \
+          --output tsv)
+        
+        echo "Raw ANALYSIS FQDN result: '$ANALYSIS_FQDN'"
+        
+        if [ -z "$ANALYSIS_FQDN" ] || [ "$ANALYSIS_FQDN" = "null" ]; then
+          echo "Cannot deploy orchestrator without a valid ANALYSIS URL"
+          exit 1
+        else
+          ANALYSIS_URL="https://$ANALYSIS_FQDN"
+          echo "analysis-url=$ANALYSIS_URL" >> $GITHUB_OUTPUT
+        fi
+
     - name: Get Frontend URLs
       id: frontend-urls
       run: |
@@ -135,6 +155,7 @@ jobs:
         environmentVariables: >
           CRUD_URL=${{ steps.crud-url.outputs.crud-url }}
           FRONTEND_URLS=${{ steps.frontend-urls.outputs.frontend-urls }}
+          ANALYSIS_URL=${{ steps.analysis-url.outputs.analysis-url }}
           JWT_SECRET=${{ secrets.JWT_SECRET }}
           ADMIN_CREDENTIALS=${{ secrets.ADMIN_CREDENTIALS }}
 

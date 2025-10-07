@@ -28,14 +28,14 @@ public class JobService {
     }
 
     public JobResponseDTO getJobs() {
-        log.info("[getJobs] Getting all jobs");
+        log.info("Pegando todas as vagas");
         try {
             List<Job> jobList = jobClient.getJobs();
 
-            log.info("[getJobs] Found {} jobs", jobList.size());
+            log.info("{} vagas encontradas", jobList.size());
             return buildJobResponseDTO(jobList);
         } catch (Exception ex) {
-            log.error("[getJobs] Error: {}", ex.getMessage());
+            log.error("Erro ao buscar vagas: {}", ex.getMessage());
             throw ex;
         }
     }

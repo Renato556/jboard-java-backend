@@ -36,53 +36,39 @@ public class SkillService {
         return skill.trim().toLowerCase();
     }
 
-    private void logSkillOperation(String operation, String skill, String username) {
-        log.info("[{}] {} skill {} for user {}", operation, operation.toLowerCase(), skill, username);
-    }
-
-    private void executeSkillOperation(String operation, Runnable clientOperation) {
-        try {
-            clientOperation.run();
-            log.info("[{}] Operation completed successfully", operation);
-        } catch (Exception ex) {
-            log.error("[{}] Error: {}", operation, ex.getMessage());
-            throw ex;
-        }
-    }
-
     public SkillResponseDTO getAllSkills(String username) {
-        log.info("[getAllSkills] Getting all skills for user {}", username);
+        log.info("Pegando habilidades do usuário {}", username);
         try {
             List<Skill> skillList = skillClient.getAllSkills(username);
-            log.info("[getAllSkills] Found {} skills for user {}", skillList.size(), username);
+            log.info("{} habilidades encontradas para o usuário: {}", skillList.size(), username);
             return buildSkillResponseDTO(skillList);
         } catch (HttpClientErrorException.NotFound ex) {
-            log.info("[getAllSkills] No skills found for user {}, returning empty list", username);
+            log.info("Nenhuma habilidade encontrada para o usuário: {}, retornando uma lista vazia", username);
             return new SkillResponseDTO(List.of(), new MetaDTO(0));
         } catch (Exception ex) {
-            log.error("[getAllSkills] Error: {}", ex.getMessage());
+            log.error("Erro ao pegar habilidades: {}", ex.getMessage());
             throw ex;
         }
     }
 
     public void addSkill(SkillDTO skillDTO, String username) {
         String normalizedSkill = normalizeSkill(skillDTO.getSkill());
-        logSkillOperation("addSkill", normalizedSkill, username);
+        log.info("Adicionando habilidade {} para o usuário {}", normalizedSkill, username);
 
         Skill skill = new Skill(username, normalizedSkill);
-        executeSkillOperation("addSkill", () -> skillClient.addSkill(skill));
+        skillClient.addSkill(skill);
     }
 
     public void removeSkill(SkillDTO skillDTO, String username) {
         String normalizedSkill = normalizeSkill(skillDTO.getSkill());
-        logSkillOperation("removeSkill", normalizedSkill, username);
+        log.info("Removendo habilidade {} para o usuário {}", normalizedSkill, username);
 
         Skill skill = new Skill(username, normalizedSkill);
-        executeSkillOperation("removeSkill", () -> skillClient.removeSkill(skill));
+        skillClient.removeSkill(skill);
     }
 
     public void deleteAllSkills(String username) {
-        log.info("[deleteAllSkills] Deleting all skills for user {}", username);
-        executeSkillOperation("deleteAllSkills", () -> skillClient.deleteAllSkills(username));
+        log.info("Removendo todas as habilidades do usuário {}", username);
+        skillClient.deleteAllSkills(username);
     }
 }
