@@ -46,8 +46,40 @@ O JBoard Orchestrator API é uma aplicação backend que funciona como gateway c
 - **Relatórios Detalhados**: Métricas de compatibilidade e recomendações
 
 #### **Administração do Sistema**
-- **PUT** `/roles/change` - Alteração de nível de acesso de usuários
+- **PUT** `/change-user-role` - Alteração de nível de acesso de usuários
 - **GET** `/jobs` - Listagem de vagas disponíveis (orquestração)
+
+**Alteração de Role de Usuário:**
+
+Para alterar a Role de um usuário (FREE ⇄ PREMIUM), utilize o endpoint administrativo:
+
+```bash
+PUT /change-user-role
+```
+
+**Autenticação Necessária:**
+- **Tipo**: Basic Authentication
+- **Credenciais Padrão**: `admin:admin`
+- **Formato Base64**: `YWRtaW46YWRtaW4=`
+
+**Exemplo de Requisição:**
+```bash
+curl -X PUT http://localhost:8081/change-user-role \
+  -H "Authorization: Basic YWRtaW46YWRtaW4=" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "username": "usuario@exemplo.com",
+    "newRole": "PREMIUM"
+  }'
+```
+
+**Payload da Requisição:**
+```json
+{
+  "username": "usuario",
+  "newRole": "FREE" | "PREMIUM"
+}
+```
 
 **Controles Administrativos:**
 - Validação de credenciais administrativas especiais
